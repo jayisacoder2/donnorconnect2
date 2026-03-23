@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app:
+    image: ghcr.io/${GHCR_USERNAME}/donorconnect:${IMAGE_TAG}
+    container_name: donorconnect-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+    volumes:
+      - app-data:/app/public
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - donorconnect-network
+
+volumes:
+  app-data:
+    driver: local
+
+networks:
+  donorconnect-network:
+    driver: bridge

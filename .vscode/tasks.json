@@ -1,0 +1,10 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Setup all deployment infrastructure",
+			"type": "shell",
+			"command": "echo 'Deployment infrastructure setup started'"
+		}
+	]
+}
