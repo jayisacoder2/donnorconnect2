@@ -45,6 +45,8 @@ jobs:
 
       - name: Generate Prisma client
         run: npx prisma generate
+          env:
+            DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Wait for PostgreSQL
         run: |
@@ -52,9 +54,13 @@ jobs:
 
       - name: Run unit tests
         run: pnpm test:node
+          env:
+            DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Run client tests
         run: pnpm test:client
+          env:
+            DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Run integration tests (if DB available)
         run: pnpm test:integration
