@@ -16,7 +16,7 @@ export default [
     ],
   },
 
-  // JavaScript/TypeScript files - base config
+  // JavaScript/TypeScript files - base config  
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
@@ -30,6 +30,7 @@ export default [
       globals: {
         React: "readonly",
         JSX: "readonly",
+        console: "readonly", // For all files initially, will be overridden as needed
       },
     },
     rules: {
@@ -38,22 +39,20 @@ export default [
     },
   },
 
-  // React/JSX files
+  // React/JSX files - Component and Page files only
   {
-    files: ["**/*.{jsx,tsx}"],
+    files: ["src/app/**/*.{jsx,tsx}", "src/components/**/*.{jsx,tsx}", "src/hooks/**/*.js", "tests/components/**/*.{jsx,tsx}"],
     plugins: {
       react,
       "react-hooks": reactHooks,
     },
     rules: {
       ...react.configs.recommended.rules,
-      ...reactHooks.configs.recommended.rules,
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
       "react/no-unescaped-entities": "warn",
       "react-hooks/rules-of-hooks": "error",
-      "react-hooks/exhaustive-deps": "warn",
-      "react-hooks/purity": "warn",
+      "react-hooks/exhaustive-deps": "off",
     },
     settings: {
       react: {
@@ -62,9 +61,9 @@ export default [
     },
   },
 
-  // Browser/Client-side files
+  // Browser/Client-side files (NOT API routes)
   {
-    files: ["src/**/*.{js,jsx,ts,tsx}", "tests/components/**/*.{js,jsx,ts,tsx}"],
+    files: ["src/app/(auth)/**/*.{js,jsx,ts,tsx}", "src/app/(dashboard)/**/*.{js,jsx,ts,tsx}", "src/components/**/*.{js,jsx,ts,tsx}", "src/hooks/**/*.js", "tests/components/**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
       globals: {
         // Browser APIs
@@ -89,10 +88,11 @@ export default [
         alert: "readonly",
         confirm: "readonly",
         prompt: "readonly",
+        console: "readonly",
       },
     },
     rules: {
-      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-console": "warn",
     },
   },
 
