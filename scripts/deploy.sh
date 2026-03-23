@@ -106,6 +106,14 @@ docker pull "ghcr.io/$GHCR_USERNAME/donorconnect:$IMAGE_TAG"
 echo "Starting application..."
 docker-compose up -d
 
+# Run database migrations
+echo "Running database migrations..."
+docker-compose exec -T app npx prisma migrate deploy || true
+
+# Clean up unused Docker images
+echo "Cleaning up unused Docker images..."
+docker image prune -f
+
 # Wait for app to be healthy
 echo "Waiting for application to be ready..."
 timeout=300
