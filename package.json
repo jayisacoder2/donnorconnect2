@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Donor retention platform for nonprofits",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -60,6 +61,8 @@
     "dotenv-cli": "^11.0.0",
     "eslint": "^10.1.0",
     "eslint-config-next": "^16.0.10",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "jsdom": "^27.3.0",
     "next-router-mock": "^1.0.4",
     "playwright": "^1.57.0",
