@@ -44,23 +44,23 @@ jobs:
         run: pnpm lint
 
       - name: Generate Prisma client
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npx prisma generate
-          env:
-            DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Wait for PostgreSQL
         run: |
           timeout 30 bash -c 'until nc -z postgres 5432; do sleep 1; done' || echo "PostgreSQL not ready, skipping tests that need DB"
 
       - name: Run unit tests
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: pnpm test:node
-          env:
-            DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Run client tests
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: pnpm test:client
-          env:
-            DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Run integration tests (if DB available)
         run: pnpm test:integration
