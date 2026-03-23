@@ -184,13 +184,14 @@ async function executeStep(params) {
       await executeTaskStep({ step, workflow, donor, organizationId, context })
       break
 
-    case 'wait':
+    case 'wait': {
       // In a real implementation, this would schedule the next step
       // For now, we'll simulate immediate execution with logging
       const waitDays = step.days || 0
       const waitHours = step.hours || 0
       console.log(`Wait step: ${waitDays} days, ${waitHours} hours (simulated - executing immediately)`)
       break
+    }
 
     default:
       console.warn(`Unknown step type: ${step.type}`)
