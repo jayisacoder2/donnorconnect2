@@ -11,9 +11,21 @@ KEY_NAME="donorconnect-key"
 SG_NAME="donorconnect-sg"
 SG_DESCRIPTION="Security group for DonorConnect application"
 INSTANCE_TYPE="t3.small"
-REGION="us-east-1"
-# Ubuntu 24.04 LTS AMI for us-east-1 (update for other regions)
-AMI_ID="ami-0c55b159cbfafe1f0"
+
+# Region selection (default: us-east-1, override with: bash setup-aws.sh eu-west-1)
+REGION="${1:-us-east-1}"
+
+# Ubuntu 24.04 LTS AMI IDs by region
+declare -A AMI_MAP=(
+    ["us-east-1"]="ami-0c55b159cbfafe1f0"
+    ["us-west-1"]="ami-0d382e80be7ffdae5"
+    ["us-west-2"]="ami-0efcece6bed30fd98"
+    ["ca-central-1"]="ami-0c9bfc21ac5bf10eb"
+    ["eu-west-1"]="ami-0dad359ff462124ca"
+    ["ap-southeast-1"]="ami-047bb4163c506cd98"
+)
+
+AMI_ID="${AMI_MAP[$REGION]:-ami-0c55b159cbfafe1f0}"
 INSTANCE_NAME="donorconnect"
 
 echo "=========================================="
