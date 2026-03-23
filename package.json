@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "test": "vitest",
     "test:node": "vitest --project=node",
     "test:client": "vitest --project=client",
@@ -46,6 +46,7 @@
     "zod": "^4.2.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
@@ -57,7 +58,7 @@
     "autoprefixer": "^10.4.23",
     "dotenv": "^17.2.3",
     "dotenv-cli": "^11.0.0",
-    "eslint": "^9.39.2",
+    "eslint": "^10.1.0",
     "eslint-config-next": "^16.0.10",
     "jsdom": "^27.3.0",
     "next-router-mock": "^1.0.4",

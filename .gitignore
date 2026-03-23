@@ -48,6 +48,12 @@ next-env.d.ts
 
 # playwright
 /test-results/
+
+# deployment setup docs (local reference only)
+DEPLOYMENT-SETUP.md
+DEPLOYMENT-NEXT-STEPS.md
+GITHUB-SECRETS-SETUP.md
+QUICK-START-DEPLOYMENT.md
 /playwright-report/
 /playwright/.cache/
 resource-docs*
