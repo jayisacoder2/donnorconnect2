@@ -1,0 +1,12 @@
+// The following scripts were commented out from package.json for troubleshooting or temporary disablement:
+// "test": "vitest",
+// "test:node": "vitest --project=node",
+// "test:client": "vitest --project=client",
+// "test:integration": "vitest --project=integration",
+// "test:watch": "vitest --watch",
+// "test:coverage": "vitest --coverage",
+// "test:coverage:node": "vitest --coverage --project=node",
+// "test:coverage:client": "vitest --coverage --project=client",
+// "test:ui": "vitest --ui",
+// "test:e2e": "playwright test",
+// "test:all": "vitest run && playwright test"
