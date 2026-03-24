@@ -109,11 +109,6 @@ jobs:
           echo "Found EC2 instance at: $PUBLIC_IP"
           echo "EC2_HOST=$PUBLIC_IP" >> $GITHUB_ENV
 
-      - name: Write SSH key to file
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
-          chmod 600 key.pem
-
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         env:
@@ -121,7 +116,7 @@ jobs:
         with:
           host: ${{ env.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key_path: key.pem
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ${{ secrets.EC2_PROJECT_PATH }}/donorconnect
             bash scripts/deploy.sh ${{ github.repository_owner }} ${{ github.sha }}
