@@ -1,5 +1,4 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+export default {
   output: 'standalone',
   experimental: {
     serverActions: {
@@ -7,5 +6,3 @@ const nextConfig = {
     },
   },
 }
-
-export default nextConfig

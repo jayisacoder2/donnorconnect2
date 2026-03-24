@@ -276,7 +276,6 @@ declare type CompilerWasmLoadingConfig = {
      * @remarks only used by ClientEngine
      */
     getQueryCompilerWasmModule: () => Promise<unknown>;
-    importName: string;
 };
 
 export declare type Compute<T> = T extends Function ? T : {
@@ -390,6 +389,13 @@ declare type DatamodelEnum = ReadonlyDeep_2<{
 
 declare function datamodelEnumToSchemaEnum(datamodelEnum: DatamodelEnum): SchemaEnum;
 
+declare type DatamodelSchemaEnum = ReadonlyDeep_2<{
+    name: string;
+    values: string[];
+}>;
+
+declare function datamodelSchemaEnumToSchemaEnum(datamodelSchemaEnum: DatamodelSchemaEnum): SchemaEnum;
+
 declare type DataRule = {
     type: 'rowCountEq';
     args: number;
@@ -498,10 +504,12 @@ export declare type DevTypeMapFnDef = {
 export declare namespace DMMF {
     export {
         datamodelEnumToSchemaEnum,
+        datamodelSchemaEnumToSchemaEnum,
         Document_2 as Document,
         Mappings,
         OtherOperationMappings,
         DatamodelEnum,
+        DatamodelSchemaEnum,
         SchemaEnum,
         EnumValue,
         Datamodel,
@@ -540,10 +548,12 @@ export declare namespace DMMF {
 declare namespace DMMF_2 {
     export {
         datamodelEnumToSchemaEnum,
+        datamodelSchemaEnumToSchemaEnum,
         Document_2 as Document,
         Mappings,
         OtherOperationMappings,
         DatamodelEnum,
+        DatamodelSchemaEnum,
         SchemaEnum,
         EnumValue,
         Datamodel,
@@ -2562,8 +2572,8 @@ declare type Schema = ReadonlyDeep_2<{
         prisma: OutputType[];
     };
     enumTypes: {
-        model?: SchemaEnum[];
-        prisma: SchemaEnum[];
+        model?: DatamodelSchemaEnum[];
+        prisma: DatamodelSchemaEnum[];
     };
     fieldRefTypes: {
         prisma?: FieldRefType[];
@@ -2582,7 +2592,10 @@ declare type SchemaArg = ReadonlyDeep_2<{
 
 declare type SchemaEnum = ReadonlyDeep_2<{
     name: string;
-    values: string[];
+    data: {
+        key: string;
+        value: string;
+    }[];
 }>;
 
 declare type SchemaField = ReadonlyDeep_2<{
