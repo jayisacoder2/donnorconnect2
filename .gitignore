@@ -56,4 +56,4 @@ GITHUB-SECRETS-SETUP.md
 QUICK-START-DEPLOYMENT.md
 /playwright-report/
 /playwright/.cache/
-resource-docs*
+resource-docs*remove-secrets.txt
