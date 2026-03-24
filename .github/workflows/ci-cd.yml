@@ -100,6 +100,13 @@ jobs:
                       "Name=instance-state-name,Values=running" \
             --query "Reservations[0].Instances[0].PublicIpAddress" \
             --output text)
+          if [ -z "$PUBLIC_IP" ] || [ "$PUBLIC_IP" = "None" ]; then
+            echo "ERROR: Could not find a running EC2 instance with Name tag '${{ secrets.EC2_INSTANCE_NAME }}'"
+            echo "Available instances:"
+            aws ec2 describe-instances --query "Reservations[*].Instances[*].[Tags[?Key=='Name'].Value|[0],State.Name,PublicIpAddress]" --output table
+            exit 1
+          fi
+          echo "Found EC2 instance at: $PUBLIC_IP"
           echo "EC2_HOST=$PUBLIC_IP" >> $GITHUB_ENV
 
       - name: Write SSH key to file
