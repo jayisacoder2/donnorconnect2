@@ -1,3 +1,4 @@
+# Dummy change to trigger CI/CD workflow
 # DonorConnect - Nonprofit Donor Retention Platform
 
 > **Helping nonprofits convert first-time donors into lifelong supporters** through intelligent donor management, automated workflows, and AI-powered insights.
