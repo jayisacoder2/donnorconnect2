@@ -4,67 +4,79 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 jobs:
-  lint-and-test:
+  ci:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_DB: testdb
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://user:pass@localhost:5432/db?schema=public
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_TELEMETRY_DISABLED: 1
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10.18.1
 
+      - name: Get pnpm store path
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store (restore)
+        uses: actions/cache/restore@v4
+        id: cache-restore
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
+        id: install
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
-
       - name: Generate Prisma client
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        if: ${{ steps.install.outcome == 'success' }}
         run: npx prisma generate
 
-      - name: Wait for PostgreSQL
-        run: |
-          timeout 30 bash -c 'until nc -z postgres 5432; do sleep 1; done' || echo "PostgreSQL not ready, skipping tests that need DB"
+      - name: Run ESLint
+        if: ${{ steps.install.outcome == 'success' }}
+        run: pnpm lint
 
+      - name: Build
+        if: ${{ steps.install.outcome == 'success' }}
+        run: pnpm build
 
+      - name: Save pnpm cache
+        if: always() && steps.install.outcome == 'success' && steps.cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
 
-  build-and-deploy:
-    needs: lint-and-test
+  deploy:
+    name: Build Docker + Deploy to EC2
     runs-on: ubuntu-latest
+    needs: [ci]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+
     permissions:
       contents: read
       packages: write
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
@@ -77,7 +89,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image to GHCR
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -95,15 +107,93 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
+      - name: Find or launch EC2 instance
+        id: ec2
+        run: |
+          set -euo pipefail
+          APP_TAG="donorconnect-app"
+
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters \
+              "Name=tag:App,Values=$APP_TAG" \
+              "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].InstanceId" \
+            --output text)
+
+          if [ "$INSTANCE_ID" = "None" ] || [ -z "$INSTANCE_ID" ]; then
+            echo "No running instance found — launching a new one..."
+            INSTANCE_ID=$(aws ec2 run-instances \
+              --image-id "${{ secrets.AMI_ID }}" \
+              --instance-type t3.small \
+              --key-name "${{ secrets.EC2_KEY_NAME }}" \
+              --security-group-ids "${{ secrets.EC2_SECURITY_GROUP_ID }}" \
+              --subnet-id "${{ secrets.EC2_SUBNET_ID }}" \
+              --tag-specifications \
+                "ResourceType=instance,Tags=[{Key=App,Value=$APP_TAG},{Key=Name,Value=$APP_TAG}]" \
+              --query "Instances[0].InstanceId" \
+              --output text)
+            echo "Launched: $INSTANCE_ID"
+          else
+            echo "Reusing existing instance: $INSTANCE_ID"
+          fi
+
+          echo "INSTANCE_ID=$INSTANCE_ID" >> "$GITHUB_ENV"
+
+      - name: Wait for instance status OK
+        run: |
+          echo "Waiting for $INSTANCE_ID to pass status checks..."
+          aws ec2 wait instance-status-ok --instance-ids "$INSTANCE_ID"
+
+      - name: Get EC2 public IP
+        run: |
+          PUBLIC_IP=$(aws ec2 describe-instances \
+            --instance-ids "$INSTANCE_ID" \
+            --query "Reservations[0].Instances[0].PublicIpAddress" \
+            --output text)
+          echo "EC2_HOST=$PUBLIC_IP" >> "$GITHUB_ENV"
+          echo "Instance IP: $PUBLIC_IP"
+
+      - name: Wait for SSH to be available
+        run: |
+          echo "Waiting for SSH on $EC2_HOST port 22..."
+          timeout 120 bash -c "until nc -z \$EC2_HOST 22; do sleep 3; done"
+          echo "SSH is open."
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          IMAGE: ghcr.io/${{ github.repository_owner }}/donorconnect:latest
+          ACTOR: ${{ github.actor }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          host: ${{ env.EC2_HOST }}
+          username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: DATABASE_URL,IMAGE,ACTOR,TOKEN
           script: |
-            cd ${{ secrets.EC2_PROJECT_PATH }}/donorconnect
-            bash scripts/deploy.sh ${{ github.repository_owner }} ${{ github.sha }}
+            # Install Docker if missing
+            if ! command -v docker &>/dev/null; then
+              sudo apt-get update -y
+              sudo apt-get install -y docker.io
+              sudo systemctl enable --now docker
+              sudo usermod -aG docker ubuntu
+              newgrp docker
+            fi
+
+            # Pull latest image
+            echo "$TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+            docker pull "$IMAGE"
+
+            # Replace running container
+            docker stop donorconnect-app 2>/dev/null || true
+            docker rm   donorconnect-app 2>/dev/null || true
+
+            docker run -d \
+              --name donorconnect-app \
+              --restart unless-stopped \
+              -p 3000:3000 \
+              -e DATABASE_URL="$DATABASE_URL" \
+              "$IMAGE"
+
+            echo "Deployed successfully on port 3000"
