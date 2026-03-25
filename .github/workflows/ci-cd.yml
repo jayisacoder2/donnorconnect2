@@ -202,22 +202,29 @@ jobs:
             sudo docker stop donorconnect-app 2>/dev/null || true
             sudo docker rm   donorconnect-app 2>/dev/null || true
 
+            # Confirm DATABASE_URL is set
+            if [ -z "$DATABASE_URL" ]; then
+              echo "ERROR: DATABASE_URL is empty — set it in GitHub Secrets"
+              exit 1
+            fi
+            echo "DATABASE_URL is set (starts with: ${DATABASE_URL:0:30}...)"
+
             sudo docker run -d \
               --name donorconnect-app \
               --restart unless-stopped \
               -p 3000:3000 \
               -e DATABASE_URL="$DATABASE_URL" \
+              -e NODE_ENV=production \
+              -e HOSTNAME=0.0.0.0 \
+              -e PORT=3000 \
               "$IMAGE"
 
-            echo "Deployed successfully — app running on port 3000"
-            sudo docker ps | grep donorconnect-app
-
             # Wait for app to fully start then print logs
-            sleep 10
-            echo "=== Container status after 10s ==="
+            sleep 15
+            echo "=== Container status after 15s ==="
             sudo docker ps -a | grep donorconnect-app
             echo "=== Container logs ==="
-            sudo docker logs donorconnect-app --tail 50
+            sudo docker logs donorconnect-app --tail 80
 
       - name: Revoke port 22 for this runner
         if: always()
