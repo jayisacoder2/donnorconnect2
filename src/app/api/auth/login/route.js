@@ -33,14 +33,15 @@ export async function POST(request) {
     const sessionToken = await createSession(user.id)
     
     // Build cookie string manually for maximum compatibility
-    const isProduction = process.env.NODE_ENV === 'production'
+    // Only set Secure when HTTPS is available (not on plain HTTP EC2 deployments)
+    const useSecure = process.env.COOKIE_SECURE === 'true'
     const cookieValue = [
       `session=${sessionToken}`,
       'Path=/',
       'HttpOnly',
       `Max-Age=${60 * 60 * 24 * 7}`,
       'SameSite=Lax',
-      isProduction ? 'Secure' : '',
+      useSecure ? 'Secure' : '',
     ].filter(Boolean).join('; ')
 
     const response = NextResponse.json({ 
