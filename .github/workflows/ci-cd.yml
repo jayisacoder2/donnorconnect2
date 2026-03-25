@@ -178,6 +178,7 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
           IMAGE: ghcr.io/${{ github.repository_owner }}/donorconnect:latest
           ACTOR: ${{ github.actor }}
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -185,7 +186,7 @@ jobs:
           host: ${{ env.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: DATABASE_URL,IMAGE,ACTOR,TOKEN
+          envs: DATABASE_URL,SESSION_SECRET,IMAGE,ACTOR,TOKEN
           script: |
             # Install Docker if missing (use sudo throughout to avoid group reloading issues)
             if ! command -v docker &>/dev/null; then
@@ -214,6 +215,7 @@ jobs:
               --restart unless-stopped \
               -p 3000:3000 \
               -e DATABASE_URL="$DATABASE_URL" \
+              -e SESSION_SECRET="$SESSION_SECRET" \
               -e NODE_ENV=production \
               -e HOSTNAME=0.0.0.0 \
               -e PORT=3000 \
