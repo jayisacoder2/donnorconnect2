@@ -212,6 +212,13 @@ jobs:
             echo "Deployed successfully — app running on port 3000"
             sudo docker ps | grep donorconnect-app
 
+            # Wait for app to fully start then print logs
+            sleep 10
+            echo "=== Container status after 10s ==="
+            sudo docker ps -a | grep donorconnect-app
+            echo "=== Container logs ==="
+            sudo docker logs donorconnect-app --tail 50
+
       - name: Revoke port 22 for this runner
         if: always()
         run: |
