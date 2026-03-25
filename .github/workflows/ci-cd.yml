@@ -153,15 +153,20 @@ jobs:
           echo "EC2_HOST=$PUBLIC_IP" >> "$GITHUB_ENV"
           echo "Instance IP: $PUBLIC_IP"
 
-      - name: Open port 22 for this runner
+      - name: Open ports in security group
         id: open-ssh
         run: |
           RUNNER_IP=$(curl -sf https://checkip.amazonaws.com)
           echo "RUNNER_IP=$RUNNER_IP" >> "$GITHUB_ENV"
+          # Temporarily open port 22 for this runner
           aws ec2 authorize-security-group-ingress \
             --group-id "${{ secrets.EC2_SECURITY_GROUP_ID }}" \
             --protocol tcp --port 22 --cidr "${RUNNER_IP}/32" || true
-          echo "Opened port 22 for $RUNNER_IP"
+          # Permanently open port 3000 for the public (0.0.0.0/0)
+          aws ec2 authorize-security-group-ingress \
+            --group-id "${{ secrets.EC2_SECURITY_GROUP_ID }}" \
+            --protocol tcp --port 3000 --cidr "0.0.0.0/0" || true
+          echo "Opened port 22 for $RUNNER_IP and port 3000 for public"
 
       - name: Wait for SSH to be available
         run: |
@@ -182,31 +187,30 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: DATABASE_URL,IMAGE,ACTOR,TOKEN
           script: |
-            # Install Docker if missing
+            # Install Docker if missing (use sudo throughout to avoid group reloading issues)
             if ! command -v docker &>/dev/null; then
               sudo apt-get update -y
               sudo apt-get install -y docker.io
               sudo systemctl enable --now docker
-              sudo usermod -aG docker ubuntu
-              newgrp docker
             fi
 
-            # Pull latest image
-            echo "$TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
-            docker pull "$IMAGE"
+            # Pull latest image (always use sudo so group membership doesn't matter)
+            echo "$TOKEN" | sudo docker login ghcr.io -u "$ACTOR" --password-stdin
+            sudo docker pull "$IMAGE"
 
             # Replace running container
-            docker stop donorconnect-app 2>/dev/null || true
-            docker rm   donorconnect-app 2>/dev/null || true
+            sudo docker stop donorconnect-app 2>/dev/null || true
+            sudo docker rm   donorconnect-app 2>/dev/null || true
 
-            docker run -d \
+            sudo docker run -d \
               --name donorconnect-app \
               --restart unless-stopped \
               -p 3000:3000 \
               -e DATABASE_URL="$DATABASE_URL" \
               "$IMAGE"
 
-            echo "Deployed successfully on port 3000"
+            echo "Deployed successfully — app running on port 3000"
+            sudo docker ps | grep donorconnect-app
 
       - name: Revoke port 22 for this runner
         if: always()
