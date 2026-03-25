@@ -179,6 +179,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           IMAGE: ghcr.io/${{ github.repository_owner }}/donorconnect:latest
           ACTOR: ${{ github.actor }}
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -186,20 +187,23 @@ jobs:
           host: ${{ env.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: DATABASE_URL,SESSION_SECRET,IMAGE,ACTOR,TOKEN
+          envs: DATABASE_URL,SESSION_SECRET,OPENAI_API_KEY,IMAGE,ACTOR,TOKEN
           script: |
-            # Install Docker if missing (use sudo throughout to avoid group reloading issues)
+            # Install Docker if missing
             if ! command -v docker &>/dev/null; then
               sudo apt-get update -y
               sudo apt-get install -y docker.io
               sudo systemctl enable --now docker
             fi
 
-            # Pull latest image (always use sudo so group membership doesn't matter)
+            # Pull latest image
             echo "$TOKEN" | sudo docker login ghcr.io -u "$ACTOR" --password-stdin
             sudo docker pull "$IMAGE"
 
-            # Replace running container
+            # Save current image as rollback target before replacing
+            PREVIOUS_IMAGE=$(sudo docker inspect donorconnect-app --format='{{.Config.Image}}' 2>/dev/null || echo "")
+
+            # Stop and remove current container
             sudo docker stop donorconnect-app 2>/dev/null || true
             sudo docker rm   donorconnect-app 2>/dev/null || true
 
@@ -208,25 +212,47 @@ jobs:
               echo "ERROR: DATABASE_URL is empty — set it in GitHub Secrets"
               exit 1
             fi
-            echo "DATABASE_URL is set (starts with: ${DATABASE_URL:0:30}...)"
 
+            # Start new container
             sudo docker run -d \
               --name donorconnect-app \
               --restart unless-stopped \
               -p 3000:3000 \
               -e DATABASE_URL="$DATABASE_URL" \
               -e SESSION_SECRET="$SESSION_SECRET" \
+              -e OPENAI_API_KEY="$OPENAI_API_KEY" \
               -e NODE_ENV=production \
               -e HOSTNAME=0.0.0.0 \
               -e PORT=3000 \
               "$IMAGE"
 
-            # Wait for app to fully start then print logs
+            # Wait and verify the container is still running (health check)
             sleep 15
-            echo "=== Container status after 15s ==="
-            sudo docker ps -a | grep donorconnect-app
+            if ! sudo docker ps --filter "name=donorconnect-app" --filter "status=running" | grep -q donorconnect-app; then
+              echo "❌ New container failed to start — rolling back to $PREVIOUS_IMAGE"
+              sudo docker rm donorconnect-app 2>/dev/null || true
+              if [ -n "$PREVIOUS_IMAGE" ]; then
+                sudo docker run -d \
+                  --name donorconnect-app \
+                  --restart unless-stopped \
+                  -p 3000:3000 \
+                  -e DATABASE_URL="$DATABASE_URL" \
+                  -e SESSION_SECRET="$SESSION_SECRET" \
+                  -e OPENAI_API_KEY="$OPENAI_API_KEY" \
+                  -e NODE_ENV=production \
+                  -e HOSTNAME=0.0.0.0 \
+                  -e PORT=3000 \
+                  "$PREVIOUS_IMAGE"
+                echo "✅ Rolled back to previous version"
+              fi
+              sudo docker logs donorconnect-app --tail 50
+              exit 1
+            fi
+
+            echo "✅ Deployed successfully — app running on port 3000"
+            sudo docker ps | grep donorconnect-app
             echo "=== Container logs ==="
-            sudo docker logs donorconnect-app --tail 80
+            sudo docker logs donorconnect-app --tail 30
 
       - name: Revoke port 22 for this runner
         if: always()
