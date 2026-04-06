@@ -10,12 +10,10 @@ const erdDiagram = `erDiagram
     Organization ||--o{ Donor : manages
     Organization ||--o{ Campaign : runs
     Organization ||--o{ Segment : defines
-    Organization ||--o{ Workflow : configures
     
     User ||--o{ Session : maintains
     User ||--o{ Task : "assigned to"
     User ||--o{ ActivityLog : generates
-    User ||--o{ WorkflowExecution : executes
     
     Donor ||--o{ Donation : makes
     Donor ||--o{ Interaction : receives
@@ -24,10 +22,7 @@ const erdDiagram = `erDiagram
     
     Campaign ||--o{ Donation : receives
     
-    Segment ||--o{ Workflow : triggers
     Segment ||--o{ SegmentMember : contains
-    
-    Workflow ||--o{ WorkflowExecution : executes
     
     Organization {
         string id PK
@@ -155,31 +150,6 @@ const erdDiagram = `erDiagram
         datetime createdAt
     }
     
-    Workflow {
-        string id PK
-        string organizationId FK
-        string segmentId FK
-        string name
-        text description
-        enum trigger
-        json steps
-        boolean isActive
-        int executionCount
-        datetime createdAt
-        datetime updatedAt
-    }
-    
-    WorkflowExecution {
-        string id PK
-        string workflowId FK
-        string executedById FK
-        string status
-        json progress
-        datetime startedAt
-        datetime completedAt
-        text error
-    }
-    
     ActivityLog {
         string id PK
         string userId FK
@@ -250,7 +220,6 @@ export default function EvidencePage() {
                   { name: 'Record Donation', path: '/donations/new', desc: 'Campaign linking' },
                   { name: 'Campaign Management', path: '/campaigns', desc: 'Goal tracking' },
                   { name: 'Segment Builder', path: '/segments', desc: 'Dynamic grouping' },
-                  { name: 'Workflow Automation', path: '/workflows', desc: 'Multi-step sequences' },
                   { name: 'Task Management', path: '/tasks', desc: 'Follow-up tracking' },
                   { name: 'Login Page', path: '/login', desc: 'Secure authentication' },
                   { name: 'Registration', path: '/register', desc: 'Org creation' },

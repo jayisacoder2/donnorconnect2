@@ -20,8 +20,6 @@ async function main() {
   // Clean existing data
   console.log('🧹 Cleaning existing data...')
   await prisma.activityLog.deleteMany()
-  await prisma.workflowExecution.deleteMany()
-  await prisma.workflow.deleteMany()
   await prisma.segmentMember.deleteMany()
   await prisma.segment.deleteMany()
   await prisma.task.deleteMany()
@@ -625,53 +623,6 @@ async function main() {
   ])
   console.log(`✅ Created ${segments.length} segments`)
 
-  // Create Workflows
-  console.log('⚙️ Creating workflows...')
-  const workflows = await Promise.all([
-    prisma.workflow.create({
-      data: {
-        name: 'First Gift Follow-Up',
-        description: 'Automated thank you and engagement workflow for first-time donors',
-        trigger: 'FIRST_DONATION',
-        steps: [
-          { type: 'email', delay: 1, subject: 'Thank you for your first gift!' },
-          { type: 'task', delay: 7, action: 'Call to introduce organization' },
-          { type: 'email', delay: 30, subject: 'Impact story: See your gift in action' }
-        ],
-        isActive: true,
-        organizationId: org1.id
-      }
-    }),
-    prisma.workflow.create({
-      data: {
-        name: 'Second Gift Journey',
-        description: 'Encourage second gift within 60 days',
-        trigger: 'DONATION_RECEIVED',
-        steps: [
-          { type: 'wait', delay: 45 },
-          { type: 'task', action: 'Send personalized appeal for second gift' },
-          { type: 'email', delay: 60, subject: 'Will you give again?' }
-        ],
-        isActive: true,
-        organizationId: org1.id
-      }
-    }),
-    prisma.workflow.create({
-      data: {
-        name: 'Lapsed Donor Re-engagement',
-        description: 'Win back donors who have not given in 12+ months',
-        trigger: 'INACTIVITY_THRESHOLD',
-        steps: [
-          { type: 'email', delay: 0, subject: 'We miss you!' },
-          { type: 'task', delay: 14, action: 'Personal outreach call' }
-        ],
-        isActive: false,
-        organizationId: org1.id
-      }
-    })
-  ])
-  console.log(`✅ Created ${workflows.length} workflows`)
-
   // Create Tasks
   console.log('✅ Creating tasks...')
   const staffUsers = users.filter(u => u.role === 'STAFF' || u.role === 'ADMIN')
@@ -742,7 +693,6 @@ async function main() {
   console.log(`   - ${await prisma.campaign.count()} campaigns`)
   console.log(`   - ${await prisma.interaction.count()} interactions`)
   console.log(`   - ${await prisma.segment.count()} segments`)
-  console.log(`   - ${await prisma.workflow.count()} workflows`)
   console.log(`   - ${await prisma.task.count()} tasks`)
   console.log('\n👤 Test Login:')
   console.log('   Email: admin@hopefoundation.org')

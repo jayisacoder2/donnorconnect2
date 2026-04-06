@@ -10,7 +10,6 @@ import {
   TrendingUp, 
   CheckSquare, 
   FolderTree, 
-  Workflow,
   LogOut,
   User,
   Zap,
@@ -26,7 +25,6 @@ const navigation = [
   { name: 'Campaigns', href: '/campaigns', icon: TrendingUp },
   { name: 'Tasks', href: '/tasks', icon: CheckSquare },
   { name: 'Segments', href: '/segments', icon: FolderTree },
-  { name: 'Workflows', href: '/workflows', icon: Workflow },
 ]
 
 const documentationLinks = [

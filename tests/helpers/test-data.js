@@ -96,26 +96,6 @@ export function createTestSegment(overrides = {}) {
   }
 }
 
-export function createTestWorkflow(overrides = {}) {
-  return {
-    id: overrides.id || randomUUID(),
-    name: overrides.name || 'Test Workflow',
-    description: overrides.description || 'Welcome new donors',
-    organizationId: overrides.organizationId || 'test-org-1',
-    segmentId: overrides.segmentId || null,
-    trigger: overrides.trigger || 'FIRST_DONATION',
-    steps: overrides.steps || [
-      { type: 'email', template: 'welcome', delay: 0 },
-      { type: 'task', title: 'Follow up call', delay: 7 },
-    ],
-    isActive: overrides.isActive ?? false,
-    executionCount: overrides.executionCount ?? 0,
-    createdAt: overrides.createdAt || new Date(),
-    updatedAt: overrides.updatedAt || new Date(),
-    ...overrides,
-  }
-}
-
 export async function seedTestDonors(prisma, count = 5) {
   const donors = []
 

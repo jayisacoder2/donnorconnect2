@@ -94,8 +94,6 @@ export async function cleanDatabase() {
 
   // Delete in correct order (respects foreign key constraints)
   await prisma.activityLog.deleteMany()
-  await prisma.workflowExecution.deleteMany()
-  await prisma.workflow.deleteMany()
   await prisma.segmentMember.deleteMany()
   await prisma.segment.deleteMany()
   await prisma.task.deleteMany()

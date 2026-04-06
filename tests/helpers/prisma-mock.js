@@ -19,8 +19,6 @@ export function createPrismaMock() {
     task: createModelMock(),
     segment: createModelMock(),
     segmentMember: createModelMock(),
-    workflow: createModelMock(),
-    workflowExecution: createModelMock(),
     activityLog: createModelMock(),
     $connect: vi.fn(),
     $disconnect: vi.fn(),

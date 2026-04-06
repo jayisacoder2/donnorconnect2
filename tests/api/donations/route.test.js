@@ -49,10 +49,6 @@ vi.mock('@/lib/api/donors', () => ({
   updateDonorMetrics: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('@/lib/api/workflows', () => ({
-  triggerWorkflows: vi.fn().mockResolvedValue(undefined),
-}))
-
 describe('GET /api/donations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
