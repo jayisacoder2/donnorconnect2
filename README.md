@@ -34,14 +34,11 @@
 | ⚡ **Workflow Automation** | Build automated sequences (thank-yous, reminders, follow-ups) |
 | ✅ **Task Management** | Track follow-up tasks and staff assignments |
 
-### Multi-Organization Platform
+### Multi-Tenant Architecture
 | Feature | Description |
 |---------|-------------|
-| 🏢 **Multi-Tenant Architecture** | Complete data isolation per organization |
-| 🌐 **Public Organization Pages** | Each org gets `/org/[slug]` public landing page |
-| 💳 **Public Donation Pages** | Organization-specific donation forms at `/org/[slug]/donate` |
-| 📁 **Organization Directory** | Browse all public organizations at `/organizations` |
-| 🔐 **Role-Based Access** | Admin, Staff, and Marketing roles with appropriate permissions |
+| 🏢 **Organization Isolation** | Complete data isolation per organization |
+| 🔐 **Role-Based Access** | Admin and Staff roles with appropriate permissions |
 
 ### AI-Powered Features
 | Feature | Description |
@@ -96,7 +93,7 @@
 
 ```
 Organization (tenant boundary)
-├── Users[]         → Staff with roles (ADMIN, STAFF, MARKETING)
+├── Users[]         → Staff with roles (ADMIN, STAFF)
 ├── Donors[]        → Donor profiles with calculated retention metrics
 ├── Donations[]     → Individual gifts linked to donors + campaigns
 ├── Campaigns[]     → Fundraising initiatives with goals
@@ -109,7 +106,6 @@ Organization (tenant boundary)
 - **Organization isolation**: Every query filtered by `organizationId`
 - **Calculated fields**: `totalAmount`, `totalGifts`, `lastGiftDate`, `retentionRisk` auto-updated
 - **12 domain enums**: DonorStatus, RetentionRisk, DonationType, CampaignStatus, etc.
-- **Public org support**: Organizations have `slug`, `isPublic`, `description` for public pages
 
 ### Authentication System
 - **Session-based auth** with HTTP-only cookies (not JWT)
@@ -194,8 +190,8 @@ The seed script creates realistic nonprofit data for development:
 
 | Entity | Count | Details |
 |--------|-------|---------|
-| Organizations | 2 | Hope Foundation, Green Earth Alliance (with slugs) |
-| Users | 10 | Staff members with Admin/Staff/Marketing roles |
+| Organizations | 2 | Hope Foundation, Green Earth Alliance |
+| Users | 10 | Staff members with Admin/Staff roles |
 | Donors | 75 | Varied retention risk profiles |
 | Donations | 200+ | Across multiple campaigns |
 | Campaigns | 5 | Annual fund, emergency response, major gifts, etc. |
@@ -267,19 +263,15 @@ donorconnect/
 │   │   │   ├── segments/
 │   │   │   ├── tasks/
 │   │   │   └── workflows/
-│   │   ├── (public)/      # Public donation pages
 │   │   ├── api/           # REST API routes
 │   │   │   ├── ai/        # AI summary endpoint
 │   │   │   ├── auth/      # Login, register, logout
 │   │   │   ├── campaigns/
 │   │   │   ├── donations/
 │   │   │   ├── donors/
-│   │   │   ├── organizations/
 │   │   │   ├── segments/
 │   │   │   ├── tasks/
 │   │   │   └── workflows/
-│   │   ├── org/[slug]/    # Public org pages
-│   │   ├── organizations/ # Org directory
 │   │   ├── ai-policy/     # AI ethics documentation
 │   │   ├── evidence/      # Rubric evidence page
 │   │   └── reflection/    # Project reflection
@@ -324,7 +316,6 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 | [/ai-policy](https://donorconnect-three.vercel.app/ai-policy) | AI ethics, safeguards, and responsible use |
 | [/evidence](https://donorconnect-three.vercel.app/evidence) | Rubric criteria with direct links to implementation |
 | [/reflection](https://donorconnect-three.vercel.app/reflection) | Project learnings and challenges |
-| [/testing](https://donorconnect-three.vercel.app/testing) | User testing capture tool |
 | [/why-donorconnect](https://donorconnect-three.vercel.app/why-donorconnect) | Value proposition for nonprofits |
 
 ---

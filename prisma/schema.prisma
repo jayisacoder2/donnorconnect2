@@ -50,15 +50,6 @@ enum CampaignStatus {
   ARCHIVED
 }
 
-enum WorkflowTrigger {
-  FIRST_DONATION
-  DONATION_RECEIVED
-  INACTIVITY_THRESHOLD
-  SEGMENT_ENTRY
-  MANUAL
-  SCHEDULED
-}
-
 enum TaskStatus {
   TODO
   IN_PROGRESS
@@ -100,7 +91,6 @@ model Organization {
   donors    Donor[]
   campaigns Campaign[]
   segments  Segment[]
-  workflows Workflow[]
 
   @@map("organizations")
 }
@@ -121,7 +111,6 @@ model User {
   sessions           Session[]
   assignedTasks      Task[]
   activityLogs       ActivityLog[]
-  workflowExecutions WorkflowExecution[]
 
   @@index([organizationId])
   @@index([email])
@@ -286,7 +275,6 @@ model Segment {
   // Relations
   organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   members      SegmentMember[]
-  workflows    Workflow[]
 
   @@index([organizationId])
   @@map("segments")
@@ -306,49 +294,6 @@ model SegmentMember {
   @@index([segmentId])
   @@index([donorId])
   @@map("segment_members")
-}
-
-model Workflow {
-  id             String          @id @default(cuid())
-  organizationId String
-  segmentId      String?
-  name           String
-  description    String?
-  trigger        WorkflowTrigger
-  steps          Json // JSON array of workflow steps
-  isActive       Boolean         @default(false)
-  executionCount Int             @default(0)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-
-  // Relations
-  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  segment      Segment?            @relation(fields: [segmentId], references: [id], onDelete: SetNull)
-  executions   WorkflowExecution[]
-
-  @@index([organizationId])
-  @@index([segmentId])
-  @@index([isActive])
-  @@map("workflows")
-}
-
-model WorkflowExecution {
-  id           String    @id @default(cuid())
-  workflowId   String
-  executedById String?
-  status       String // "pending", "running", "completed", "failed"
-  progress     Json? // Current step, data, etc.
-  startedAt    DateTime  @default(now())
-  completedAt  DateTime?
-  error        String?
-
-  // Relations
-  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  executedBy User?    @relation(fields: [executedById], references: [id], onDelete: SetNull)
-
-  @@index([workflowId])
-  @@index([status])
-  @@map("workflow_executions")
 }
 
 // ============================================================================

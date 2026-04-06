@@ -1,7 +1,6 @@
 // Business logic for donor operations
 import { prisma } from '../db'
 import { updateDonorSchema } from '../validation/donor-schema'
-import { triggerWorkflows } from './workflows'
 import { buildDonorWhereFromSegmentRules } from './segment-rules'
 
 /**
@@ -192,20 +191,6 @@ async function refreshSegmentsForDonor(donorId) {
     if (matches && !existing) {
       await prisma.segmentMember.create({ data: { segmentId: seg.id, donorId: donor.id } })
       
-      // Trigger SEGMENT_ENTRY workflows when donor joins a segment
-      // Fetch segment name from segments array for context
-      const segmentWithName = await prisma.segment.findUnique({
-        where: { id: seg.id },
-        select: { name: true },
-      })
-      
-      await triggerWorkflows({
-        trigger: 'SEGMENT_ENTRY',
-        organizationId: donor.organizationId,
-        donorId: donor.id,
-        segmentId: seg.id,
-        context: { segmentName: segmentWithName?.name || 'Unknown' },
-      }).catch(err => console.error('Workflow trigger failed:', err))
     } else if (!matches && existing) {
       await prisma.segmentMember.delete({ where: { id: existing.id } })
     }

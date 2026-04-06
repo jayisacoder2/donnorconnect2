@@ -57,3 +57,5 @@ QUICK-START-DEPLOYMENT.md
 /playwright-report/
 /playwright/.cache/
 resource-docs*remove-secrets.txt
+README_Validation_Report.md
+docs

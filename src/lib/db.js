@@ -54,14 +54,7 @@ export const RetentionRisk = {
   CRITICAL: 'CRITICAL'
 }
 
-export const WorkflowTrigger = {
-  FIRST_DONATION: 'FIRST_DONATION',
-  DONATION_RECEIVED: 'DONATION_RECEIVED',
-  INACTIVITY_THRESHOLD: 'INACTIVITY_THRESHOLD',
-  SEGMENT_ENTRY: 'SEGMENT_ENTRY',
-  MANUAL: 'MANUAL',
-  SCHEDULED: 'SCHEDULED'
-}
+
 
 export const InteractionType = {
   EMAIL: 'EMAIL',

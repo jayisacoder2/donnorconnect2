@@ -4,7 +4,6 @@ import { getSession } from '@/lib/session'
 import { prisma } from '@/lib/db'
 import { donationListQuerySchema, createDonationSchema } from '@/lib/validation/donation-schema'
 import { updateDonorMetrics } from '@/lib/api/donors'
-import { triggerWorkflows } from '@/lib/api/workflows'
 
 export async function GET(request) {
   try {
@@ -81,22 +80,6 @@ export async function POST(request) {
 
     const donation = await prisma.donation.create({ data })
     await updateDonorMetrics(data.donorId)
-
-    // Check if this is the donor's first donation
-    const donationCount = await prisma.donation.count({ where: { donorId: data.donorId } })
-    const isFirstDonation = donationCount === 1
-
-    // Trigger workflows
-    await triggerWorkflows({
-      trigger: isFirstDonation ? 'FIRST_DONATION' : 'DONATION_RECEIVED',
-      organizationId: session.user.organizationId,
-      donorId: data.donorId,
-      context: {
-        donationId: donation.id,
-        amount: donation.amount,
-        campaignId: donation.campaignId,
-      },
-    })
 
     return NextResponse.json({ donation }, { status: 201 })
   } catch (error) {
